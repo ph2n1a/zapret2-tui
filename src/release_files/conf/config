@@ -1,0 +1,4 @@
+main {
+  first_start = true
+  zapret_path = "none"
+}

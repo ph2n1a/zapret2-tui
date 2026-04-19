@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 
 project(zapret-tui C)
 
+
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
@@ -37,24 +38,10 @@ set(SOURCES
     src/main.c
     src/utils/readconf.c
     src/lib/inih-r62/ini.c
+    src/utils/check_dependencies.c
+    src/utils/writeconf.c
 )
 
 add_executable(zapret-tui ${SOURCES})
 
-# -------------------------
-# Config path
-# -------------------------
-target_compile_definitions(zapret-tui PRIVATE
-    CONFIG_PATH=\"${CMAKE_SOURCE_DIR}/config\"
-)
-
-# -------------------------
-# Install rules
-# -------------------------
-install(TARGETS zapret-tui
-    RUNTIME DESTINATION bin
-)
-
-install(DIRECTORY config/
-    DESTINATION share/zapret-tui/config
-)
+target_link_libraries(zapret-tui confuse)
