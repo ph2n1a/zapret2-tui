@@ -37,9 +37,10 @@ include_directories(
 set(SOURCES
     src/main.c
     src/utils/readconf.c
-    src/lib/inih-r62/ini.c
-    src/utils/check_dependencies.c
     src/utils/writeconf.c
+    src/utils/check_dependencies.c
+    src/core/first_start.c
+    src/core/read_zapret_conf.c
 )
 
 add_executable(zapret-tui ${SOURCES})

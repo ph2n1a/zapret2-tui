@@ -3,7 +3,8 @@
 int write_conf_sec(const char *cfg_set, const char *name, const char *value) {
   cfg_opt_t main_opts[] = {
     CFG_BOOL("first_start", cfg_true, CFGF_NONE),
-    CFG_STR("zapret_path", "/opt/zapret2", CFGF_NONE),
+    CFG_STR("zapret_path", "none", CFGF_NONE),
+    CFG_STR("program_path", "none", CFGF_NONE),
     CFG_END()
   };
 
@@ -14,13 +15,11 @@ int write_conf_sec(const char *cfg_set, const char *name, const char *value) {
 
   cfg_t *cfg = cfg_init(opts, 0);
 
-  // читаем файл
   if (cfg_parse(cfg, "./config/config") == CFG_PARSE_ERROR) {
     printf("Parse error\n");
     return 1;
   }
 
-  // получаем секцию
   cfg_t *main_sec = cfg_getsec(cfg, "main");
 
   if (strcmp(cfg_set, "set_bool") == 0) {
