@@ -4,7 +4,7 @@ int first_start() {
   char path[512];
   char choice;
 
-  printf("Welcome to zapret-tui\nThis program is a TUI wrapper for zapret(2), and to use it, you must have zapret installed. This program was written using zapret2 v0.9.5, but it should be compatible with other versions, including the standard zapret. Enjoy using zapret-tui ;)\n");
+  printf("Welcome to zapret-tui\nThis program is a TUI wrapper for zapret2 only, and to use it, you must have zapret installed. This program was written using zapret2 v0.9.5, but it should work on other versions too. Enjoy using zapret-tui ;)\n");
   printf("\nSpecify the path to the folder with zapret: ");
   scanf("%511s", path);
 

@@ -2,7 +2,9 @@
 
 int read_conf_engine() {
   char zapret_path[512];
-  strcpy(zapret_path, read_conf_char("zapret_path"));
+  Config config;
+  read_conf_config(&config, "main");
+  strcpy(zapret_path, config.zapret_path);
   strcat(zapret_path, "/config");
   FILE *f = fopen(zapret_path, "r");
 
@@ -84,7 +86,7 @@ int read_conf_engine() {
     printf("Error. NFQWS2_OPT not found\n");
   }
 
-  printf("\n%d\n%d\n\n%d\n%d", start, finish, stand_format, start_scan);
+  printf("\n%d\n%d\n\n%d\n%d\n\n", start, finish, stand_format, start_scan);
 
   return 0;
 }

@@ -3,8 +3,8 @@
 int write_conf_sec(const char *cfg_set, const char *name, const char *value) {
   cfg_opt_t main_opts[] = {
     CFG_BOOL("first_start", cfg_true, CFGF_NONE),
-    CFG_STR("zapret_path", "none", CFGF_NONE),
-    CFG_STR("program_path", "none", CFGF_NONE),
+    CFG_STR("zapret_path", NULL, CFGF_NONE),
+    CFG_STR("program_path", NULL, CFGF_NONE),
     CFG_END()
   };
 

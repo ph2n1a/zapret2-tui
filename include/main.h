@@ -6,6 +6,7 @@
 #include "./utils/check_dependencies.h"
 #include "./core/first_start.h"
 #include "./core/read_zapret_conf.h"
+#include "./utils/utils.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
