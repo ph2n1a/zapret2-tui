@@ -34,7 +34,7 @@ int read_conf_config(Config *config_main, const char *section) {
   }
 }
 
-Profile* read_conf_profiles(const char *section, int *count, short *error_code) {
+Profile* read_conf_profiles(const char *section, short *count, short *error_code) {
   Profile *profile = malloc(128 * sizeof(Profile));
 
   cfg_opt_t profile_opts[] = {

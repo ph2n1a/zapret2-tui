@@ -1,5 +1,5 @@
 main {
   first_start=true
-  zapret_path=""
-  program_path=""
+  zapret_path="none"
+  program_path="none"
 }

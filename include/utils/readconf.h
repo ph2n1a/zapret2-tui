@@ -20,6 +20,6 @@ typedef struct {
 } Profile;
 
 int read_conf_config(Config *config, const char *section);
-Profile* read_conf_profiles(const char *section, int *count, short *error_code);
+Profile* read_conf_profiles(const char *section, short *count, short *error_code);
 
 #endif

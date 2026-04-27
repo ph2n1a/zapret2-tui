@@ -1,4 +1,13 @@
-#include "../include/main.h"
+#include "../include/utils/readconf.h"
+#include "../include/utils/check_dependencies.h"
+#include "../include/core/first_start.h"
+#include "../include/core/read_zapret_conf.h"
+#include "../include/utils/utils.h"
+#include "../include/core/create_zapret_configs.h"
+
+#include <stdbool.h>
+#include <stdio.h>
+#include <string.h>
 
 int main() {
   if (!check_dependencies()) {
@@ -18,19 +27,19 @@ int main() {
     return 1;
   }
 
-  read_conf_engine();
+  ZapretConf zapret_conf = read_conf_engine();
   
-  int count;
+  short n_profiles;
   short error_code = 0;
-  Profile *profiles = read_conf_profiles("profile", &count, &error_code);
-  Profile profile[count];
+  Profile *profiles = read_conf_profiles("profile", &n_profiles, &error_code);
+  Profile profile[n_profiles];
 
   if (error_code) {
     printf("Error. Unable to read profies.conf. Possible errors:\n- Empty file\n- Syntax error\n- Invalid data type\n- Unknown parameter\n- Missing required parameter\n");
     return 1;
   }
 
-  for (int i = 0; i < count; i++) {
+  for (int i = 0; i < n_profiles; i++) {
     profile[i] = profiles[i];
     collapse_spaces(profile[i].nfqws2_opt);
     remove_newlines(profile[i].nfqws2_opt);
@@ -38,6 +47,11 @@ int main() {
   }
 
   free(profiles);
+  
+  if (create_zapret_configs(zapret_conf, profile, &n_profiles)) {
+    printf("Error. When program was creating zapret configs for links");
+    return 1;
+  }
 
   printf("\nProgram finished!");
   return 0;

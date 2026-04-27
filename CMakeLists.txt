@@ -42,6 +42,7 @@ set(SOURCES
     src/core/first_start.c
     src/core/read_zapret_conf.c
     src/utils/utils.c
+    src/core/create_zapret_configs.c
 )
 
 add_executable(zapret-tui ${SOURCES})
