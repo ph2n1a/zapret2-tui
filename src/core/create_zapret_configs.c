@@ -14,13 +14,24 @@ int create_zapret_configs(ZapretConf zapret_config, Profile profile[], const sho
     }
 
     for (short j = 0; j < zapret_config.lines; j++) {
-      if (j >= (zapret_config.start - 1) && j <= (zapret_config.finish + 1)) {
-        if (!written) {
-          fprintf(f, "NFQWS2_OPT=\"%s\"\n", profile[i].nfqws2_opt);
-          written = true;
+      if (zapret_config.stand_format) {
+        if (j >= (zapret_config.start - 1) && j <= (zapret_config.finish + 1)) {
+          if (!written) {
+            fprintf(f, "NFQWS2_OPT=\"%s\"\n", profile[i].nfqws2_opt);
+            written = true;
+          }
+        } else {
+          fputs(zapret_config.text[j], f);
         }
       } else {
-        fputs(zapret_config.text[j], f);
+        if (j == zapret_config.start) {
+          if (!written) {
+            fprintf(f, "NFQWS2_OPT=\"%s\"\n", profile[i].nfqws2_opt);
+            written = true;
+          }
+        } else {
+          fputs(zapret_config.text[j], f);
+        }
       }
     }
     fclose(f);

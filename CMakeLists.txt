@@ -1,39 +1,60 @@
 cmake_minimum_required(VERSION 3.16)
-
 project(zapret-tui C)
-
 
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
-set(CMAKE_C_EXTENSIONS OFF)
+set(CMAKE_C_EXTENSIONS ON)
 
-# -------------------------
-# Build type
-# -------------------------
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif()
 
-# -------------------------
-# Warnings
-# -------------------------
-add_compile_options(
-    -Wall
-    -Wextra
-    -Wpedantic
+add_compile_options(-Wall -Wextra -Wpedantic)
+
+include(FetchContent)
+include(ExternalProject)
+
+FetchContent_Declare(
+    confuse
+    GIT_REPOSITORY https://github.com/martinh/libconfuse.git
+    GIT_TAG        v3.3
+)
+FetchContent_MakeAvailable(confuse)
+
+set(NCURSES_INSTALL "${CMAKE_BINARY_DIR}/_deps/ncurses_install")
+
+file(MAKE_DIRECTORY ${NCURSES_INSTALL}/include ${NCURSES_INSTALL}/lib)
+file(TOUCH ${NCURSES_INSTALL}/lib/libncurses.a)
+
+ExternalProject_Add(
+    ncurses_ext
+    URL      https://ftp.gnu.org/pub/gnu/ncurses/ncurses-6.4.tar.gz
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+    
+    INSTALL_DIR ${NCURSES_INSTALL}
+    
+    CONFIGURE_COMMAND <SOURCE_DIR>/configure
+        --prefix=${NCURSES_INSTALL}
+        --without-cxx --without-cxx-binding --without-ada
+        --without-manpages --without-tests
+        --with-shared=no
+        --with-normal=yes
+        --enable-widec=no
+        --disable-stripping
+        CC=${CMAKE_C_COMPILER}
+        CFLAGS=${CMAKE_C_FLAGS}
+    
+    BUILD_COMMAND   ${CMAKE_MAKE_PROGRAM}
+    INSTALL_COMMAND ${CMAKE_MAKE_PROGRAM} install
 )
 
-# -------------------------
-# Include directories
-# -------------------------
-include_directories(
-    include
-    src/lib/inih-r62
+add_library(ncurses STATIC IMPORTED GLOBAL)
+set_target_properties(ncurses PROPERTIES
+    IMPORTED_LOCATION             "${NCURSES_INSTALL}/lib/libncurses.a"
+    INTERFACE_INCLUDE_DIRECTORIES "${NCURSES_INSTALL}/include"
 )
+add_dependencies(ncurses ncurses_ext)
 
-# -------------------------
-# Sources
-# -------------------------
 set(SOURCES
     src/main.c
     src/utils/readconf.c
@@ -43,8 +64,18 @@ set(SOURCES
     src/core/read_zapret_conf.c
     src/utils/utils.c
     src/core/create_zapret_configs.c
+    src/core/create_link.c
+    src/ui/app.c
+    src/ui/core.c
+    src/ui/input.c
+    src/ui/ui.c
 )
 
 add_executable(zapret-tui ${SOURCES})
 
-target_link_libraries(zapret-tui confuse)
+target_include_directories(zapret-tui PRIVATE
+    include
+    src/lib/inih-r62
+)
+
+target_link_libraries(zapret-tui PRIVATE confuse ncurses)

@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
-#include "../utils/readconf.h"
+#include <stdlib.h>
 
 typedef struct {
   int start;
@@ -14,6 +14,6 @@ typedef struct {
   bool stand_format;
 } ZapretConf;
 
-ZapretConf read_conf_engine();
+ZapretConf read_conf_engine(char *zapret_path_n);
 
 #endif  // INCLUDE_CORE_READ_ZAPRET_CONF_H_

@@ -5,5 +5,6 @@
 
 void collapse_spaces(char* str);
 void remove_newlines(char* str);
+void copy_file(const char *src, const char *dst);
 
 #endif  // INCLUDE_UTILS_UTILS_H_

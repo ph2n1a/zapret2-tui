@@ -1,10 +1,6 @@
 #include "../../include/core/read_zapret_conf.h"
 
-ZapretConf read_conf_engine() {
-  char zapret_path[512];
-  Config config;
-  read_conf_config(&config, "main");
-  strcpy(zapret_path, config.zapret_path);
+ZapretConf read_conf_engine(char *zapret_path) {
   strcat(zapret_path, "/config");
   FILE *f = fopen(zapret_path, "r");
 

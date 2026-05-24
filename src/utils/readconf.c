@@ -5,6 +5,7 @@ int read_conf_config(Config *config_main, const char *section) {
     CFG_BOOL("first_start", cfg_true, CFGF_NONE),
     CFG_STR("zapret_path", "none", CFGF_NONE),
     CFG_STR("program_path", "none", CFGF_NONE),
+    CFG_INT("view_profile", -1, CFGF_NONE),
     CFG_END()
   };
 
@@ -25,6 +26,7 @@ int read_conf_config(Config *config_main, const char *section) {
     config_main->first_start = cfg_getbool(main_sec, "first_start");
     strcpy(config_main->zapret_path, cfg_getstr(main_sec, "zapret_path"));
     strcpy(config_main->program_path, cfg_getstr(main_sec, "program_path"));
+    config_main->view_profile = cfg_getint(main_sec, "view_profile");
 
     cfg_free(cfg);
     return 0;

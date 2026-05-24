@@ -11,6 +11,7 @@ typedef struct {
   bool first_start;
   char zapret_path[512];
   char program_path[512];
+  int view_profile;
 } Config;
 
 typedef struct {

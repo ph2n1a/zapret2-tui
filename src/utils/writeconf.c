@@ -5,6 +5,7 @@ int write_conf_sec(const char *cfg_set, const char *name, const char *value) {
     CFG_BOOL("first_start", cfg_true, CFGF_NONE),
     CFG_STR("zapret_path", NULL, CFGF_NONE),
     CFG_STR("program_path", NULL, CFGF_NONE),
+    CFG_INT("view_profile", -1, CFGF_NONE),
     CFG_END()
   };
 
@@ -30,6 +31,9 @@ int write_conf_sec(const char *cfg_set, const char *name, const char *value) {
     }
   } else if (strcmp(cfg_set, "set_str") == 0) {
     cfg_setstr(main_sec, name, value);
+  } else if (strcmp(cfg_set, "set_int") == 0) {
+    int num = strtol(value, NULL, 10);
+    cfg_setint(main_sec, name, num);
   }
 
   FILE *f = fopen("./config/config", "w");
