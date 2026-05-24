@@ -1,6 +1,0 @@
-main {
-  first_start=true
-  zapret_path="none"
-  program_path="none"
-  view_profile=-1
-}
