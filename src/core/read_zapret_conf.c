@@ -1,6 +1,7 @@
 #include "../../include/core/read_zapret_conf.h"
 
-ZapretConf read_conf_engine(char *zapret_path) {
+ZapretConf read_conf_engine(char *get_zapret_path) {
+  char *zapret_path = strdup(get_zapret_path);
   strcat(zapret_path, "/config");
   FILE *f = fopen(zapret_path, "r");
 
@@ -28,7 +29,6 @@ ZapretConf read_conf_engine(char *zapret_path) {
 
   for (int j = 0; j < i; j++) {
     int len = strlen(text[j]);
-    printf("%s", text[j]);
 
     if (start_scan && stand_format == 1) {
       if (strstr(text[j], "\"") != NULL) {
@@ -67,16 +67,12 @@ ZapretConf read_conf_engine(char *zapret_path) {
     }
   }
   
-  printf("\n");
   if (stand_format == 1) {
     for (int j = start; j <= finish; j++) {
       strcpy(nfqws2_opt[c], text[j]);
-      printf("%s", nfqws2_opt[c]);
       c++;
     }
-  } else if (stand_format == 0) {
-    printf("%s\n", nfqws2_opt[0]);
-  } else {
+  } else if (stand_format == 2) {
     printf("Error. NFQWS2_OPT not found\n");
   }
 
@@ -85,7 +81,6 @@ ZapretConf read_conf_engine(char *zapret_path) {
   info.lines = i;
   info.stand_format = stand_format;
   memcpy(info.text, text, sizeof(text));
-  printf("\n%d\n%d\n\n%d\n%d\n\n", start, finish, stand_format, start_scan);
 
   return info;
 }

@@ -8,7 +8,8 @@ int create_link(char *zapret_path, int *n_profile) {
   snprintf(user_conf_path, sizeof(user_conf_path), "./config/zapret_config/config_%d", *n_profile);
   snprintf(zapret_conf_path, sizeof(zapret_conf_path), "%s/config", zapret_path);
   snprintf(zapret_conf_save_path, sizeof(zapret_conf_save_path), "%s/config.save", zapret_path);
-  rename(zapret_conf_path, zapret_conf_save_path);
+
+  if (!file_exists_in_dir(zapret_path, "config.save")) rename(zapret_conf_path, zapret_conf_save_path);
 
   copy_file(user_conf_path, zapret_conf_path);
 

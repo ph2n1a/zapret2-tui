@@ -3,8 +3,7 @@
 #include <confuse.h>
 
 int check_dependencies() {
-    printf("✅ ncurses: %s\n", NCURSES_VERSION);
-    printf("✅ libconfuse: \n");
+    printf("\nncurses: %s OK\n", NCURSES_VERSION);
 
     void *handle = dlopen("libconfuse.so", RTLD_LAZY);
 
@@ -18,5 +17,7 @@ int check_dependencies() {
     }
 
     dlclose(handle);
+
+    printf("libconfuse: OK\n\n");
     return 1;
 }

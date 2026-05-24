@@ -56,5 +56,5 @@ dkms.conf
 
 # Build folder
 build/
-releases/
+release/
 local/

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(zapret-tui C)
+project(zapret2-tui C)
 
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -71,11 +71,11 @@ set(SOURCES
     src/ui/ui.c
 )
 
-add_executable(zapret-tui ${SOURCES})
+add_executable(zapret2-tui ${SOURCES})
 
-target_include_directories(zapret-tui PRIVATE
+target_include_directories(zapret2-tui PRIVATE
     include
     src/lib/inih-r62
 )
 
-target_link_libraries(zapret-tui PRIVATE confuse ncurses)
+target_link_libraries(zapret2-tui PRIVATE confuse ncurses)

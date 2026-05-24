@@ -12,6 +12,7 @@ typedef struct {
   char zapret_path[512];
   char program_path[512];
   int view_profile;
+  bool without_sudo;
 } Config;
 
 typedef struct {
