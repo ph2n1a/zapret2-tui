@@ -10,7 +10,7 @@
 
 void collapse_spaces(char* str);
 void remove_newlines(char* str);
-void copy_file(const char *src, const char *dst);
+int copy_file(const char *src, const char *dst);
 int file_exists_in_dir(const char *dir, const char *filename);
 int compare_files(const char *path1, const char *path2);
 bool is_root();

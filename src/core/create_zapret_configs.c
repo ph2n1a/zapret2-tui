@@ -3,6 +3,11 @@
 int create_zapret_configs(ZapretConf zapret_config, Profile profile[], const short *n_profiles) {
   char path[128];
 
+  if (zapret_config.start < 0 || zapret_config.lines <= 0) {
+    printf("Error. Invalid zapret config\n");
+    return 1;
+  }
+
   for (short i = 0; i < *n_profiles; i++) {
     bool written = false;
 

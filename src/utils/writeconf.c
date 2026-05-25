@@ -16,12 +16,18 @@ int write_conf_sec(const char *cfg_set, const char *name, const char *value) {
 
   cfg_t *cfg = cfg_init(opts, 0);
 
-  if (cfg_parse(cfg, "./config/config") == CFG_PARSE_ERROR) {
+  if (cfg_parse(cfg, "./config/config") != CFG_SUCCESS) {
     printf("Parse error\n");
+    cfg_free(cfg);
     return 1;
   }
 
   cfg_t *main_sec = cfg_getsec(cfg, "main");
+  if (!main_sec) {
+    printf("Parse error\n");
+    cfg_free(cfg);
+    return 1;
+  }
 
   if (strcmp(cfg_set, "set_bool") == 0) {
     if (strcmp(value, "true") == 0) {
@@ -37,6 +43,12 @@ int write_conf_sec(const char *cfg_set, const char *name, const char *value) {
   }
 
   FILE *f = fopen("./config/config", "w");
+  if (!f) {
+    printf("Error. Unable to write ./config/config\n");
+    cfg_free(cfg);
+    return 1;
+  }
+
   cfg_print(cfg, f);
   fclose(f);
 

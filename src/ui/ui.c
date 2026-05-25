@@ -147,7 +147,7 @@ void draw_header(int active_code) {
   mvwprintw(header_win, 1, max_x - 28, "zapret2-tui");
 
   wattron(header_win, A_REVERSE);
-  mvwprintw(header_win, 1, max_x - 16, " v0.0.5 ALPHA ");
+  mvwprintw(header_win, 1, max_x - 15, " v1.0.1 BETA ");
   wattroff(header_win, A_REVERSE);
 }
 
@@ -260,12 +260,21 @@ char** split_by_new(const char *text, int *count) {
 
     size_t len = sep - ptr;
     result[i] = strndup(ptr, len);
-    if (!result[i]) { printf("Error. Handling allocation error"); }
+    if (!result[i]) {
+      free(buf);
+      free_split(result, parts);
+      return NULL;
+    }
         
     ptr = sep + 5;
     collapse_spaces(result[i]);
   }
   result[*count] = strdup(ptr);
+  if (!result[*count]) {
+    free(buf);
+    free_split(result, parts);
+    return NULL;
+  }
   collapse_spaces(result[*count]);
   free(buf);
 

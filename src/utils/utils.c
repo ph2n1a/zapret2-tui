@@ -39,15 +39,20 @@ void remove_newlines(char* str) {
   str[write] = '\0';
 }
 
-void copy_file(const char *src, const char *dst) {
+int copy_file(const char *src, const char *dst) {
+  if (!src || !dst) return -1;
+
   FILE *in = fopen(src, "rb");
+  if (!in) return -1;
+
   FILE *out = fopen(dst, "wb");
-  if (!in || !out) return;
+  if (!out) { fclose(in); return -1; }
 
   char buf[8192]; size_t n;
   while ((n = fread(buf, 1, sizeof(buf), in)) > 0) fwrite(buf, 1, n, out);
 
   fclose(in); fclose(out);
+  return 0;
 }
 
 int file_exists_in_dir(const char *dir, const char *filename) {

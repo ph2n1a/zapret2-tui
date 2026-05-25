@@ -1,86 +1,80 @@
 #include "../../include/core/read_zapret_conf.h"
 
 ZapretConf read_conf_engine(char *get_zapret_path) {
-  char *zapret_path = strdup(get_zapret_path);
-  strcat(zapret_path, "/config");
-  FILE *f = fopen(zapret_path, "r");
+  ZapretConf info = {0};
+  info.start = -1;
+  info.finish = -1;
+  info.lines = 0;
+  info.stand_format = false;
 
-  ZapretConf info;
-  char text[256][512];
-  char line[512];
-  char nfqws2_opt[64][512];
-  int i = 0;
-  int c = 0;
-  int start = 0;
-  int finish = 0;
-  int stand_format = 2;
-  bool start_scan = false;
+  if (!get_zapret_path || !*get_zapret_path) {
+    printf("Error. Empty zapret path\n");
+    return info;
+  }
 
-  if (f != NULL) {
-    while (fgets(line, sizeof(line), f) && i < 256) {
-      strcpy(text[i], line);
-        i++;
-      }
-      fclose(f);
-  } else {
+  const char *suffix = "/config";
+  size_t need = strlen(get_zapret_path) + strlen(suffix) + 1;
+  char *zapret_conf_path = malloc(need);
+  if (!zapret_conf_path) {
+    printf("Error. Out of memory\n");
+    return info;
+  }
+  snprintf(zapret_conf_path, need, "%s%s", get_zapret_path, suffix);
+
+  FILE *f = fopen(zapret_conf_path, "r");
+  free(zapret_conf_path);
+  if (!f) {
     printf("Error opened file\n");
-    exit(1);
+    return info;
   }
 
-  for (int j = 0; j < i; j++) {
-    int len = strlen(text[j]);
-
-    if (start_scan && stand_format == 1) {
-      if (strstr(text[j], "\"") != NULL) {
-        finish = j - 1;
-        start_scan = false;
-      }
-    }
-
-    if (strstr(text[j], "NFQWS2_OPT=") != NULL) {
-      if (text[j][len - 2] == '"' && text[j][len - 3] == '=') {
-        stand_format = 1;
-        start_scan =  true;
-        start = j + 1;
-      } else if (text[j][len - 2] == '"') {
-        stand_format = 0;
-        start_scan = true;
-        start = j;
-      } else printf("Error. Failed to read NFQWS2_OPT correctly");
-    }
-
-    if (start_scan && stand_format == 0) {
-      bool quotes_opened = false;
-      int v = 0;
-      for (int l = 0; l < len; l++) {
-        if (quotes_opened) {
-          nfqws2_opt[0][v] = text[j][l];
-          v++;
-        }
-        if (text[j][l] == '"') {
-          quotes_opened = !quotes_opened;
-        }
-      }
-      start_scan = false;
-      finish = j;
-      nfqws2_opt[0][strlen(nfqws2_opt[0]) - 1] = '\0';
-    }
+  char line[512];
+  short i = 0;
+  while (fgets(line, sizeof(line), f) && i < 256) {
+    snprintf(info.text[i], sizeof(info.text[i]), "%s", line);
+    i++;
   }
-  
-  if (stand_format == 1) {
-    for (int j = start; j <= finish; j++) {
-      strcpy(nfqws2_opt[c], text[j]);
-      c++;
-    }
-  } else if (stand_format == 2) {
-    printf("Error. NFQWS2_OPT not found\n");
-  }
-
-  info.start = start;
-  info.finish = finish;
+  fclose(f);
   info.lines = i;
-  info.stand_format = stand_format;
-  memcpy(info.text, text, sizeof(text));
+
+  for (int j = 0; j < info.lines; j++) {
+    const char *s = info.text[j];
+    if (!strstr(s, "NFQWS2_OPT=")) continue;
+
+    const char *eq = strchr(s, '=');
+    if (!eq) continue;
+
+    const char *first_quote = strchr(eq + 1, '"');
+    if (!first_quote) continue;
+
+    const char *second_quote = strchr(first_quote + 1, '"');
+    if (second_quote) {
+      info.stand_format = false;
+      info.start = j;
+      info.finish = j;
+      break;
+    }
+
+    info.stand_format = true;
+    info.start = j + 1;
+
+    for (int k = info.start; k < info.lines; k++) {
+      if (strchr(info.text[k], '"')) {
+        info.finish = k - 1;
+        break;
+      }
+    }
+    break;
+  }
+
+  if (info.start < 0) {
+    printf("Error. NFQWS2_OPT not found\n");
+  } else if (info.stand_format && info.finish < info.start - 1) {
+    printf("Error. Failed to read NFQWS2_OPT correctly\n");
+    info.start = -1;
+    info.finish = -1;
+    info.stand_format = false;
+  }
 
   return info;
 }

@@ -17,15 +17,37 @@ int read_conf_config(Config *config_main, const char *section) {
 
     cfg_t *cfg = cfg_init(opts, 0);
 
-    if (cfg_parse(cfg, "./config/config") == CFG_PARSE_ERROR) {
+    if (cfg_parse(cfg, "./config/config") != CFG_SUCCESS) {
       printf("Parse error\n");
+      cfg_free(cfg);
+      return 1;
     }
 
     cfg_t *main_sec = cfg_getsec(cfg, "main");
+    if (!main_sec) {
+      printf("Parse error\n");
+      cfg_free(cfg);
+      return 1;
+    }
 
     config_main->first_start = cfg_getbool(main_sec, "first_start");
-    strcpy(config_main->zapret_path, cfg_getstr(main_sec, "zapret_path"));
-    strcpy(config_main->program_path, cfg_getstr(main_sec, "program_path"));
+    const char *zapret_path = cfg_getstr(main_sec, "zapret_path");
+    const char *program_path = cfg_getstr(main_sec, "program_path");
+    if (!zapret_path || !program_path) {
+      printf("Parse error\n");
+      cfg_free(cfg);
+      return 1;
+    }
+
+    if (strlen(zapret_path) >= sizeof(config_main->zapret_path) ||
+        strlen(program_path) >= sizeof(config_main->program_path)) {
+      printf("Error. Path too long in config\n");
+      cfg_free(cfg);
+      return 1;
+    }
+
+    snprintf(config_main->zapret_path, sizeof(config_main->zapret_path), "%s", zapret_path);
+    snprintf(config_main->program_path, sizeof(config_main->program_path), "%s", program_path);
     config_main->view_profile = cfg_getint(main_sec, "view_profile");
 
     cfg_free(cfg);
@@ -37,7 +59,9 @@ int read_conf_config(Config *config_main, const char *section) {
 }
 
 Profile* read_conf_profiles(const char *section, short *count, short *error_code) {
-  Profile *profile = malloc(128 * sizeof(Profile));
+  if (!count || !error_code) return NULL;
+  *count = 0;
+  *error_code = 0;
 
   cfg_opt_t profile_opts[] = {
     CFG_INT("id", 0, CFGF_NONE),
@@ -55,9 +79,10 @@ Profile* read_conf_profiles(const char *section, short *count, short *error_code
     cfg_t *cfg = cfg_init(opts, 0);
 
     int ret = cfg_parse(cfg, "./profiles.conf");
-    if (ret == CFG_PARSE_ERROR || ret != CFG_SUCCESS) {
+    if (ret != CFG_SUCCESS) {
       *error_code = 1;
       printf("Parse error\n");
+      cfg_free(cfg);
       return NULL;
     }
 
@@ -66,6 +91,22 @@ Profile* read_conf_profiles(const char *section, short *count, short *error_code
 
     if (n_profiles == 0) {
       *error_code = 1;
+      cfg_free(cfg);
+      return NULL;
+    }
+
+    if (n_profiles < 0 || n_profiles > 1024) {
+      *error_code = 1;
+      printf("Error. Too many profiles\n");
+      cfg_free(cfg);
+      return NULL;
+    }
+
+    Profile *profile = calloc((size_t)n_profiles, sizeof(Profile));
+    if (!profile) {
+      *error_code = 1;
+      printf("Error. Out of memory\n");
+      cfg_free(cfg);
       return NULL;
     }
 
@@ -76,24 +117,47 @@ Profile* read_conf_profiles(const char *section, short *count, short *error_code
       if (i > 0 && profile[i].id == 0) {
         *error_code = 1;
         printf("Parse error\n");
+        free(profile);
+        cfg_free(cfg);
         return NULL;
       }
 
-      strcpy(profile[i].name, cfg_getstr(sec, "name"));
-      strcpy(profile[i].nfqws2_opt, cfg_getstr(sec, "NFQWS2_OPT"));
+      const char *name = cfg_getstr(sec, "name");
+      const char *nfqws2_opt = cfg_getstr(sec, "NFQWS2_OPT");
+      if (!name || !nfqws2_opt) {
+        *error_code = 1;
+        free(profile);
+        cfg_free(cfg);
+        return NULL;
+      }
+
+      if (strlen(name) >= sizeof(profile[i].name) ||
+          strlen(nfqws2_opt) >= sizeof(profile[i].nfqws2_opt)) {
+        *error_code = 1;
+        printf("Error. Profile value too long\n");
+        free(profile);
+        cfg_free(cfg);
+        return NULL;
+      }
+
+      snprintf(profile[i].name, sizeof(profile[i].name), "%s", name);
+      snprintf(profile[i].nfqws2_opt, sizeof(profile[i].nfqws2_opt), "%s", nfqws2_opt);
       
       if (strcmp(profile[i].name, "none") == 0 || strcmp(profile[i].nfqws2_opt, "none") == 0) {
         *error_code = 1;
+        free(profile);
+        cfg_free(cfg);
         return NULL;
       }
     }
 
     cfg_free(cfg);
+    return profile;
   } else {
     printf("Error. Section in ./profiles.conf not founded");
   }
 
-  return profile;
+  *error_code = 1;
+  return NULL;
 }
-
 
