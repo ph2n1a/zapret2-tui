@@ -1,4 +1,6 @@
 #include "../../include/core/read_zapret_conf.h"
+#include <errno.h>
+#include <limits.h>
 
 ZapretConf read_conf_engine(char *get_zapret_path) {
   ZapretConf info = {0};
@@ -8,23 +10,19 @@ ZapretConf read_conf_engine(char *get_zapret_path) {
   info.stand_format = false;
 
   if (!get_zapret_path || !*get_zapret_path) {
-    printf("Error. Empty zapret path\n");
+    fprintf(stderr, "Error: zapret path is empty.\n");
     return info;
   }
 
-  const char *suffix = "/config";
-  size_t need = strlen(get_zapret_path) + strlen(suffix) + 1;
-  char *zapret_conf_path = malloc(need);
-  if (!zapret_conf_path) {
-    printf("Error. Out of memory\n");
+  char zapret_conf_path[PATH_MAX];
+  if (snprintf(zapret_conf_path, sizeof(zapret_conf_path), "%s/config", get_zapret_path) >= (int)sizeof(zapret_conf_path)) {
+    fprintf(stderr, "Error: zapret config path is too long.\n");
     return info;
   }
-  snprintf(zapret_conf_path, need, "%s%s", get_zapret_path, suffix);
 
   FILE *f = fopen(zapret_conf_path, "r");
-  free(zapret_conf_path);
   if (!f) {
-    printf("Error opened file\n");
+    fprintf(stderr, "Error: failed to open %s: %s\n", zapret_conf_path, strerror(errno));
     return info;
   }
 
@@ -68,9 +66,9 @@ ZapretConf read_conf_engine(char *get_zapret_path) {
   }
 
   if (info.start < 0) {
-    printf("Error. NFQWS2_OPT not found\n");
+    fprintf(stderr, "Error: NFQWS2_OPT was not found in %s.\n", zapret_conf_path);
   } else if (info.stand_format && info.finish < info.start - 1) {
-    printf("Error. Failed to read NFQWS2_OPT correctly\n");
+    fprintf(stderr, "Error: failed to parse multi-line NFQWS2_OPT in %s.\n", zapret_conf_path);
     info.start = -1;
     info.finish = -1;
     info.stand_format = false;

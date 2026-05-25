@@ -27,6 +27,8 @@ typedef struct {
   bool is_reload;
   bool service_error;
   bool help_window;
+  bool error_window;
+  char error_message[256];
   int running;
 } AppState;
 

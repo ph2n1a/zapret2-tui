@@ -53,8 +53,11 @@ dkms.conf
 
 # debug information files
 *.dwo
+.codex
 
 # Build folder
 build/
 release/
 local/
+
+zapret2-tui*/

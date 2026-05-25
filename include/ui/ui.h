@@ -20,6 +20,7 @@ int count_word(const char *text);
 int get_service_status();
 
 void help_window();
+void error_window(const char *message);
 void clean_between_boxes();
 
 #endif  // INCLUDE_UI_UI_H_

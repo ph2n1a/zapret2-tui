@@ -9,8 +9,8 @@ int check_dependencies() {
 
     if (!handle) {
         fprintf(stderr,
-            "ERROR: libconfuse is not installed or not found.\n"
-            "Please install dependencies first.\n"
+            "Error: libconfuse is not installed or could not be loaded.\n"
+            "Please install project dependencies first.\n"
             "Run: ./dependencies.sh\n"
         );
         return 0;

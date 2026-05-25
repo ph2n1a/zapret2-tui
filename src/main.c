@@ -16,26 +16,25 @@ int main() {
   short error_code = 0;
 
   if (!check_dependencies()) {
-    printf("check_dependencies returned 1");
     return 1;
   }
 
   Config config_main;
   if (read_conf_config(&config_main, "main") != 0) {
-    printf("Error. Unable to read ./config/config\n");
     return 1;
   }
 
   if (config_main.first_start == true) {
-    if (first_start()) return 0;
+    int first_start_result = first_start();
+    if (first_start_result > 0) return 0;
+    if (first_start_result < 0) return 1;
   }
 
   if (read_conf_config(&config_main, "main") != 0) {
-    printf("Error. Unable to read ./config/config\n");
     return 1;
   }
   if (strcmp(config_main.zapret_path, "none") == 0 || strcmp(config_main.program_path, "none") == 0) {
-    printf("Error. You did not specify the path to the zapret2 folder.");
+    fprintf(stderr, "Error: zapret path or program path is not configured in ./config/config.\n");
     return 1;
   }
 
@@ -43,31 +42,38 @@ int main() {
   Profile *profile = read_conf_profiles("profile", &n_profiles, &error_code);
 
   if (error_code || !profile) {
-    printf("Error. Unable to read profies.conf. Possible errors:\n- Empty file\n- Syntax error\n- Invalid data type\n- Unknown parameter\n- Missing required parameter\n");
     return 1;
   }
 
   if (create_zapret_configs(zapret_conf, profile, &n_profiles)) {
-    printf("Error. When program was creating zapret configs for links");
+    free(profile);
     return 1;
   }
 
   if (config_main.view_profile != -1) {
     char n_config_path[512];
     char zapret_config_path[512];
+    int saved_view_profile = config_main.view_profile;
 
-	    if (snprintf(n_config_path, sizeof(n_config_path), "%s/config/zapret_config/config_%d", config_main.program_path, config_main.view_profile) >= (int)sizeof(n_config_path) ||
+	    if (snprintf(n_config_path, sizeof(n_config_path), "%s/config/zapret_config/config_%d", config_main.program_path, saved_view_profile) >= (int)sizeof(n_config_path) ||
 	        snprintf(zapret_config_path, sizeof(zapret_config_path), "%s/config", config_main.zapret_path) >= (int)sizeof(zapret_config_path)) {
 	      config_main.view_profile = -1;
-	      write_conf_sec("set_int", "view_profile", "-1");
-	      printf("View profil was set -1");
+	      if (write_conf_sec("set_int", "view_profile", "-1") != 0) {
+          free(profile);
+          return 1;
+        }
+	      fprintf(stderr, "Warning: active profile was reset because its config path is too long.\n");
 	    } else {
 	      int compare_files_code = compare_files(zapret_config_path, n_config_path);
 
 	      if (compare_files_code) {
 	        config_main.view_profile = -1;
-	        write_conf_sec("set_int", "view_profile", "-1");
-	        printf("View profil was set -1");
+	        if (write_conf_sec("set_int", "view_profile", "-1") != 0) {
+            free(profile);
+            return 1;
+          }
+	        fprintf(stderr, "Warning: active profile was reset because zapret2 config does not match stored config_%d.\n",
+                  saved_view_profile);
 	      }
 	    }
 	  } 
@@ -75,7 +81,8 @@ int main() {
   config_main.without_sudo = !is_root();
 
   if (app_init(profile, &n_profiles, config_main) != 0) {
-    fprintf(stderr, "Failed to initialize TUI\n");
+    fprintf(stderr, "Error: failed to initialize TUI.\n");
+    free(profile);
     return 1;
   }
   app_run();

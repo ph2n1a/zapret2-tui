@@ -191,8 +191,9 @@ void ui_draw(const AppState *state, Profile *profile, int *view_profile) {
     }
   }
 
+  clean_between_boxes();
   if (state->help_window) help_window();
-  else clean_between_boxes();
+  if (state->error_window) error_window(state->error_message);
 
   if (without_sudo) {
     wattron(main_win, A_REVERSE);
@@ -224,6 +225,56 @@ void help_window() {
   mvprintw((max_y / 2) + 3, (max_x / 2) - 20, "                                        ");
   mvprintw((max_y / 2) + 4, (max_x / 2) - 20, " (q) - quit program                     ");
   mvprintw((max_y / 2) + 5, (max_x / 2) - 20, "                                        ");
+  attroff(COLOR_PAIR(4));
+}
+
+void error_window(const char *message) {
+  char lines[8][41];
+  int line_count = 0;
+  int max_line_len = 0;
+
+  memset(lines, 0, sizeof(lines));
+
+  if (message && *message) {
+    const char *start = message;
+    while (*start != '\0' && line_count < 8) {
+      const char *end = strchr(start, '\n');
+      size_t len = end ? (size_t)(end - start) : strlen(start);
+      if (len > 40) len = 40;
+
+      memcpy(lines[line_count], start, len);
+      lines[line_count][len] = '\0';
+
+      if ((int)len > max_line_len) max_line_len = (int)len;
+      line_count++;
+
+      if (!end) break;
+      start = end + 1;
+    }
+  }
+
+  if (line_count == 0) {
+    snprintf(lines[0], sizeof(lines[0]), "Unknown error");
+    line_count = 1;
+    max_line_len = strlen(lines[0]);
+  }
+
+  int width = max_line_len + 4;
+  if (width < 32) width = 32;
+  if (width > max_x - 2) width = max_x - 2;
+
+  int height = line_count + 2;
+  int start_y = (max_y - height) / 2;
+  int start_x = (max_x - width) / 2;
+
+  attron(COLOR_PAIR(4));
+  for (int i = 0; i < height; i++) {
+    mvprintw(start_y + i, start_x, "%*s", width, "");
+  }
+
+  for (int i = 0; i < line_count; i++) {
+    mvprintw(start_y + 1 + i, start_x + 2, "%s", lines[i]);
+  }
   attroff(COLOR_PAIR(4));
 }
 
