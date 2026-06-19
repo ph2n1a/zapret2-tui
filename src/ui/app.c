@@ -1,4 +1,5 @@
 #include "../../include/ui/app.h"
+#include "../../include/utils/log.h"
 
 static AppState g_state;
 static Profile *profile;
@@ -15,7 +16,8 @@ void reload_timer(int i) {
   }
 }
 
-int app_init(Profile *profile_get, short *n_profiles_get, Config main_conf_get) {
+int app_init(Profile *profile_get, short *n_profiles_get, Config main_conf_get, Testing testing_get) {
+  LOG_INFO("app", "Initializing TUI application");
   if (!initscr()) return -1;
 
   cbreak();
@@ -30,14 +32,18 @@ int app_init(Profile *profile_get, short *n_profiles_get, Config main_conf_get) 
   main_conf = main_conf_get;
   g_state.view_profile = main_conf.view_profile;
   without_sudo = main_conf_get.without_sudo;
+  for (int i = 0; i < APP_MAX_PROFILES; i++) {
+    g_state.testing_profiles[i] = TESTING_PROFILE_NOT_TESTED;
+  }
 
-  core_init(&g_state, &n_profiles, main_conf.zapret_path, without_sudo);
+  core_init(&g_state, &n_profiles, profile, main_conf.zapret_path, without_sudo, testing_get);
   ui_init(without_sudo);
 
   return 0;
 }
 
 void app_run() {
+  LOG_INFO("app", "Entering main event loop");
   while (g_state.running) {
     InputAction action = input_poll();
     core_update(&g_state, action);
@@ -57,6 +63,8 @@ void app_run() {
 }
 
 void app_cleanup() {
+  LOG_INFO("app", "Cleaning up application");
+  testing_log_close();
   ui_cleanup();
   endwin();
 }

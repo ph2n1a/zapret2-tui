@@ -60,4 +60,13 @@ build/
 release/
 local/
 
+# Logs
+logs/
+
 zapret2-tui*/
+zapret2-tui*.tar.gz
+zapret2-tui*.zip
+.mimocode/
+.agents/
+# Logs
+logs/

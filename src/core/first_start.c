@@ -1,19 +1,21 @@
 #include "../../include/core/first_start.h"
+#include "../../include/utils/log.h"
 #include <errno.h>
 
 int first_start() {
+  LOG_INFO("first_start", "First start wizard launched");
   char path[512];
   char choice;
 
   printf("Welcome to zapret-tui\nThis program is a TUI wrapper for zapret2 only, and to use it, you must have zapret installed. This program was written using zapret2 v0.9.5, but it should work on other versions too. If you don't have zapret2 installed, you can install it at https://github.com/bol-van/zapret2. Enjoy using zapret-tui ;)\n");
   printf("\nSpecify the path to the folder with zapret: ");
   if (scanf("%511s", path) != 1) {
-    fprintf(stderr, "Error: failed to read zapret path from stdin.\n");
+    LOG_ERROR("first_start", "Failed to read zapret path from stdin");
     return -1;
   }
 
   if (access(path, F_OK) != 0) {
-    fprintf(stderr, "Error: path does not exist: %s\n", path);
+    LOG_ERROR("first_start", "Path does not exist: %s", path);
     return -1;
   }
 
@@ -24,7 +26,7 @@ int first_start() {
 
   ssize_t bin_path_len = readlink("/proc/self/exe", bin_path, sizeof(bin_path) - 1);
   if (bin_path_len == -1) {
-    fprintf(stderr, "Error: failed to resolve executable path: %s\n", strerror(errno));
+    LOG_ERROR("first_start", "Failed to resolve executable path: %s", strerror(errno));
     return -1;
   }
   bin_path[bin_path_len] = '\0';
@@ -52,14 +54,14 @@ int first_start() {
   } else if (choice == 'E' || choice == 'e') {
     const char *editor = getenv("EDITOR");
     if (!editor || !*editor) {
-      fprintf(stderr, "Error: EDITOR is not set.\n");
+      LOG_ERROR("first_start", "EDITOR is not set");
       return -1;
     }
     execlp(editor, editor, "./profiles.conf", NULL);
-    fprintf(stderr, "Error: failed to launch editor \"%s\": %s\n", editor, strerror(errno));
+    LOG_ERROR("first_start", "Failed to launch editor: %s", strerror(errno));
     return -1;
   }
 
-  fprintf(stderr, "Error: invalid choice \"%c\". Expected Y, N, or E.\n", choice);
+  LOG_ERROR("first_start", "Invalid choice '%c'. Expected Y, N, or E.", choice);
   return -1;
 }

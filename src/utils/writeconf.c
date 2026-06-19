@@ -1,9 +1,11 @@
 #include "../../include/utils/writeconf.h"
+#include "../../include/utils/log.h"
 #include <errno.h>
 
 int write_conf_sec(const char *cfg_set, const char *name, const char *value) {
+  LOG_INFO("writeconf", "Writing %s=%s (mode: %s)", name, value, cfg_set);
   if (!cfg_set || !name || !value) {
-    fprintf(stderr, "Error: write_conf_sec received invalid arguments.\n");
+    LOG_ERROR("writeconf", "Invalid arguments");
     return 1;
   }
 
@@ -23,14 +25,14 @@ int write_conf_sec(const char *cfg_set, const char *name, const char *value) {
   cfg_t *cfg = cfg_init(opts, 0);
 
   if (cfg_parse(cfg, "./config/config") != CFG_SUCCESS) {
-    fprintf(stderr, "Error: failed to parse ./config/config before writing.\n");
+    LOG_ERROR("writeconf", "Failed to parse config before writing");
     cfg_free(cfg);
     return 1;
   }
 
   cfg_t *main_sec = cfg_getsec(cfg, "main");
   if (!main_sec) {
-    fprintf(stderr, "Error: section \"main\" is missing in ./config/config.\n");
+    LOG_ERROR("writeconf", "Section 'main' missing");
     cfg_free(cfg);
     return 1;
   }
@@ -41,7 +43,7 @@ int write_conf_sec(const char *cfg_set, const char *name, const char *value) {
     } else if (strcmp(value, "false") == 0) {
       cfg_setbool(main_sec, name, cfg_false);
     } else {
-      fprintf(stderr, "Error: invalid boolean value \"%s\" for key \"%s\".\n", value, name);
+      LOG_ERROR("writeconf", "Invalid boolean '%s' for key '%s'", value, name);
       cfg_free(cfg);
       return 1;
     }
@@ -51,21 +53,21 @@ int write_conf_sec(const char *cfg_set, const char *name, const char *value) {
     int num = strtol(value, NULL, 10);
     cfg_setint(main_sec, name, num);
   } else {
-    fprintf(stderr, "Error: unsupported write mode \"%s\".\n", cfg_set);
+    LOG_ERROR("writeconf", "Unsupported write mode '%s'", cfg_set);
     cfg_free(cfg);
     return 1;
   }
 
   FILE *f = fopen("./config/config", "w");
   if (!f) {
-    fprintf(stderr, "Error: failed to open ./config/config for writing: %s\n", strerror(errno));
+    LOG_ERROR("writeconf", "Failed to open config for writing: %s", strerror(errno));
     cfg_free(cfg);
     return 1;
   }
 
   cfg_print(cfg, f);
   if (fclose(f) != 0) {
-    fprintf(stderr, "Error: failed to flush ./config/config: %s\n", strerror(errno));
+    LOG_ERROR("writeconf", "Failed to flush config: %s", strerror(errno));
     cfg_free(cfg);
     return 1;
   }

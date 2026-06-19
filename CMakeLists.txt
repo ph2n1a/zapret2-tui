@@ -13,6 +13,8 @@ add_compile_options(-Wall -Wextra -Wpedantic)
 
 include(FetchContent)
 include(ExternalProject)
+find_package(Threads REQUIRED)
+find_package(OpenSSL REQUIRED)
 
 FetchContent_Declare(
     confuse
@@ -59,6 +61,7 @@ set(SOURCES
     src/main.c
     src/utils/readconf.c
     src/utils/writeconf.c
+    src/utils/log.c
     src/utils/check_dependencies.c
     src/core/first_start.c
     src/core/read_zapret_conf.c
@@ -69,6 +72,7 @@ set(SOURCES
     src/ui/core.c
     src/ui/input.c
     src/ui/ui.c
+    src/core/testing_profiles.c
 )
 
 add_executable(zapret2-tui ${SOURCES})
@@ -78,4 +82,4 @@ target_include_directories(zapret2-tui PRIVATE
     src/lib/inih-r62
 )
 
-target_link_libraries(zapret2-tui PRIVATE confuse ncurses)
+target_link_libraries(zapret2-tui PRIVATE confuse ncurses Threads::Threads OpenSSL::SSL OpenSSL::Crypto)

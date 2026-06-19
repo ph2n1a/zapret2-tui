@@ -16,6 +16,12 @@ typedef struct {
 } Config;
 
 typedef struct {
+  bool error_code;
+  char tables[128];
+  char domain[256];
+} Testing;
+
+typedef struct {
   int id;
   char name[128];
   char nfqws2_opt[4096];
@@ -23,5 +29,6 @@ typedef struct {
 
 int read_conf_config(Config *config, const char *section);
 Profile* read_conf_profiles(const char *section, short *count, short *error_code);
+Testing read_conf_testing();
 
 #endif

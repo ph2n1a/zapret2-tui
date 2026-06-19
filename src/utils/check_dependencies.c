@@ -1,8 +1,10 @@
 #include "../../include/utils/check_dependencies.h"
+#include "../../include/utils/log.h"
 #include <ncurses.h>
 #include <confuse.h>
 
 int check_dependencies() {
+  LOG_INFO("check_deps", "Checking dependencies");
     printf("\nncurses: %s OK\n", NCURSES_VERSION);
 
     void *handle = dlopen("libconfuse.so", RTLD_LAZY);

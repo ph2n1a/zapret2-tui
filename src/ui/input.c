@@ -1,4 +1,5 @@
 #include "../../include/ui/input.h"
+#include "../../include/utils/log.h"
 
 InputAction input_poll() {
     int ch = getch();
@@ -17,6 +18,10 @@ InputAction input_poll() {
         case 'r': return INPUT_RELOAD_SERVICE;
         case 'H':
         case 'h': return INPUT_OPEN_HELP_WINDOW;
+        case 'T':
+        case 't': return INPUT_TESTING_ONE;
+        case 'A':
+        case 'a': return INPUT_TESTING_ALL;
         case 'q':
         case 'Q':
         case 27: return INPUT_QUIT;

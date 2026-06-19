@@ -1,4 +1,5 @@
 #include "../../include/utils/utils.h"
+#include "../../include/utils/log.h"
 #include <errno.h>
 
 void collapse_spaces(char *str) {
@@ -45,13 +46,13 @@ int copy_file(const char *src, const char *dst) {
 
   FILE *in = fopen(src, "rb");
   if (!in) {
-    fprintf(stderr, "Error: failed to open source file %s: %s\n", src, strerror(errno));
+    LOG_ERROR("utils", "Failed to open source file %s: %s", src, strerror(errno));
     return -1;
   }
 
   FILE *out = fopen(dst, "wb");
   if (!out) {
-    fprintf(stderr, "Error: failed to open destination file %s: %s\n", dst, strerror(errno));
+    LOG_ERROR("utils", "Failed to open destination file %s: %s", dst, strerror(errno));
     fclose(in);
     return -1;
   }
@@ -59,7 +60,7 @@ int copy_file(const char *src, const char *dst) {
   char buf[8192]; size_t n;
   while ((n = fread(buf, 1, sizeof(buf), in)) > 0) {
     if (fwrite(buf, 1, n, out) != n) {
-      fprintf(stderr, "Error: failed to write destination file %s: %s\n", dst, strerror(errno));
+      LOG_ERROR("utils", "Failed to write destination file %s: %s", dst, strerror(errno));
       fclose(in);
       fclose(out);
       return -1;
@@ -67,19 +68,19 @@ int copy_file(const char *src, const char *dst) {
   }
 
   if (ferror(in)) {
-    fprintf(stderr, "Error: failed to read source file %s: %s\n", src, strerror(errno));
+    LOG_ERROR("utils", "Failed to read source file %s: %s", src, strerror(errno));
     fclose(in);
     fclose(out);
     return -1;
   }
 
   if (fclose(in) != 0) {
-    fprintf(stderr, "Error: failed to close source file %s: %s\n", src, strerror(errno));
+    LOG_ERROR("utils", "Failed to close source file %s: %s", src, strerror(errno));
     fclose(out);
     return -1;
   }
   if (fclose(out) != 0) {
-    fprintf(stderr, "Error: failed to close destination file %s: %s\n", dst, strerror(errno));
+    LOG_ERROR("utils", "Failed to close destination file %s: %s", dst, strerror(errno));
     return -1;
   }
   return 0;
@@ -105,9 +106,9 @@ int compare_files(const char *path1, const char *path2) {
     
   if (!f1 || !f2) {
     if (!f1) {
-      fprintf(stderr, "Error: failed to open file %s for comparison: %s\n", path1, strerror(errno));
+      LOG_ERROR("utils", "Failed to open %s for comparison: %s", path1, strerror(errno));
     } else {
-      fprintf(stderr, "Error: failed to open file %s for comparison: %s\n", path2, strerror(errno));
+      LOG_ERROR("utils", "Failed to open %s for comparison: %s", path2, strerror(errno));
     }
     if (f1) fclose(f1);
     if (f2) fclose(f2);
@@ -135,7 +136,7 @@ int compare_files(const char *path1, const char *path2) {
   }
 
   if (ferror(f1) || ferror(f2)) {
-    fprintf(stderr, "Error: failed while reading files during comparison.\n");
+    LOG_ERROR("utils", "Failed reading files during comparison");
     fclose(f1); fclose(f2);
     return -1;
   }

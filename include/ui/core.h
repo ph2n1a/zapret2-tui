@@ -3,9 +3,13 @@
 
 #include "../core/create_link.h"
 #include "../utils/writeconf.h"
+#include "../core/testing_profiles.h"
 #include <stdbool.h>
 #include <stdlib.h>
 #include <sys/wait.h>
+#include <pthread.h>
+
+#define APP_MAX_PROFILES 1024
 
 typedef enum {
   INPUT_NONE = 0,
@@ -18,6 +22,8 @@ typedef enum {
   INPUT_START_SERVICE,
   INPUT_STOP_SERVICE,
   INPUT_OPEN_HELP_WINDOW,
+  INPUT_TESTING_ONE,
+  INPUT_TESTING_ALL,
 } InputAction;
 
 typedef struct {
@@ -30,9 +36,11 @@ typedef struct {
   bool error_window;
   char error_message[256];
   int running;
+
+  int testing_profiles[APP_MAX_PROFILES];
 } AppState;
 
-void core_init(AppState *state, short *n_profiles, char *get_zapret_path, bool get_without_sudo);
+void core_init(AppState *state, short *n_profiles, Profile *profiles, char *get_zapret_path, bool get_without_sudo, Testing testing_get);
 void core_update(AppState *state, InputAction action);
 int zapret2_ctl(int code);
 

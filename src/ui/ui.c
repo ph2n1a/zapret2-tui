@@ -1,4 +1,5 @@
 #include "../../include/ui/ui.h"
+#include "../../include/utils/log.h"
 #include <ncurses.h>
 
 WINDOW *header_win = NULL;
@@ -10,6 +11,7 @@ static bool without_sudo;
 int max_y, max_x, main_height, main_width, menu_height, menu_width;
 
 void ui_init(bool get_without_sudo) {
+  LOG_INFO("ui", "Initializing UI (width=%d, height=%d)", max_x, max_y);
   ui_cleanup();
 
   getmaxyx(stdscr, max_y, max_x);
@@ -44,6 +46,11 @@ void ui_init(bool get_without_sudo) {
   init_pair(2, COLOR_YELLOW, COLOR_BLACK);
   init_pair(3, COLOR_RED, COLOR_BLACK);
   init_pair(4, COLOR_BLACK, COLOR_WHITE);
+  init_pair(5, COLOR_BLACK, COLOR_YELLOW);
+  init_pair(6, COLOR_BLACK, COLOR_RED);
+  init_pair(7, COLOR_BLACK, COLOR_GREEN);
+  init_pair(8, COLOR_BLACK, COLOR_MAGENTA);
+    init_pair(9, COLOR_BLACK, COLOR_CYAN);
 
   box(header_win, 0, 0);
   box(menu_win, 0, 0);
@@ -62,10 +69,11 @@ void draw_menu(Profile *profile, int i) {
   int lines_count = count_word(profile[i].nfqws2_opt);
   char **lines = split_by_new(profile[i].nfqws2_opt, &lines_count);
 
-  short usable_width = main_width - 4;
+  int usable_width = main_width - 4;
   int current_row = 6;
 
   if (usable_width <= 0) { free_split(lines, lines_count); return; }
+  size_t wrap_width = (size_t)usable_width;
 
   mvwprintw(main_win, 4, 2, "NFQWS2_OPT:");
 
@@ -73,10 +81,10 @@ void draw_menu(Profile *profile, int i) {
     if (!lines[j]) continue;
 
     size_t len = strlen(lines[j]);
-    for (size_t pos = 0; pos < len; pos += usable_width) {
+    for (size_t pos = 0; pos < len; pos += wrap_width) {
       if (current_row >= main_height) break;
 
-      size_t chunk_len = (len - pos < usable_width) ? (len - pos) : usable_width;
+      size_t chunk_len = (len - pos < wrap_width) ? (len - pos) : wrap_width;
       if (chunk_len > 1023) chunk_len = 1023;
 
       char chunk[1024];
@@ -147,7 +155,7 @@ void draw_header(int active_code) {
   mvwprintw(header_win, 1, max_x - 28, "zapret2-tui");
 
   wattron(header_win, A_REVERSE);
-  mvwprintw(header_win, 1, max_x - 15, " v1.0.1 BETA ");
+  mvwprintw(header_win, 1, max_x - 15, " v1.5.0 BETA ");
   wattroff(header_win, A_REVERSE);
 }
 
@@ -191,6 +199,40 @@ void ui_draw(const AppState *state, Profile *profile, int *view_profile) {
     }
   }
 
+  for (int i = 0; i < state->menu_count; i++) {
+    switch (state->testing_profiles[i]) {
+      case TESTING_PROFILE_SUCCESS:
+        wattron(menu_win, COLOR_PAIR(7));
+        mvwprintw(menu_win, i + 1, menu_width - 3, "S");
+        wattroff(menu_win, COLOR_PAIR(7));
+        break;
+
+      case TESTING_PROFILE_FAIL:
+        wattron(menu_win, COLOR_PAIR(6));
+        mvwprintw(menu_win, i + 1, menu_width - 3, "F");
+        wattroff(menu_win, COLOR_PAIR(6));
+        break;
+
+      case TESTING_PROFILE_RUNNING:
+        wattron(menu_win, COLOR_PAIR(5));
+        mvwprintw(menu_win, i + 1, menu_width - 3, "T");
+        wattroff(menu_win, COLOR_PAIR(5));
+        break;
+
+      case TESTING_PROFILE_PARTIAL:
+        wattron(menu_win, COLOR_PAIR(9));
+        mvwprintw(menu_win, i + 1, menu_width - 3, "P");
+        wattroff(menu_win, COLOR_PAIR(9));
+        break;
+
+      case TESTING_PROFILE_ERROR:
+        wattron(menu_win, COLOR_PAIR(8));
+        mvwprintw(menu_win, i + 1, menu_width - 3, "X");
+        wattroff(menu_win, COLOR_PAIR(8));
+        break;
+    }
+  }
+
   clean_between_boxes();
   if (state->help_window) help_window();
   if (state->error_window) error_window(state->error_message);
@@ -212,23 +254,41 @@ void ui_draw(const AppState *state, Profile *profile, int *view_profile) {
 }
 
 void help_window() {
+  LOG_INFO("ui", "Drawing help window");
   attron(COLOR_PAIR(4));
-  mvprintw((max_y / 2) - 6, (max_x / 2) - 20, "                                        ");
-  mvprintw((max_y / 2) - 5, (max_x / 2) - 20, " HELP MENU                              ");
-  mvprintw((max_y / 2) - 4, (max_x / 2) - 20, " (up) - select profile up               ");
-  mvprintw((max_y / 2) - 3, (max_x / 2) - 20, " (down) - select profile down           ");
-  mvprintw((max_y / 2) - 2, (max_x / 2) - 20, " (enter) - connect selected profile     ");
-  mvprintw((max_y / 2) - 1, (max_x / 2) - 20, "                                        ");
-  mvprintw((max_y / 2), (max_x / 2) - 20, " (s) - start service zapret2            ");
-  mvprintw((max_y / 2) + 1, (max_x / 2) - 20, " (x) - stop service zapret2             ");
-  mvprintw((max_y / 2) + 2, (max_x / 2) - 20, " (r) - reload/restart service zapret2   ");
-  mvprintw((max_y / 2) + 3, (max_x / 2) - 20, "                                        ");
-  mvprintw((max_y / 2) + 4, (max_x / 2) - 20, " (q) - quit program                     ");
-  mvprintw((max_y / 2) + 5, (max_x / 2) - 20, "                                        ");
+  mvprintw((max_y / 2) - 13, (max_x / 2) - 20, "                                                ");
+  mvprintw((max_y / 2) - 12, (max_x / 2) - 20, "   HELP MENU                                    ");
+  mvprintw((max_y / 2) - 11, (max_x / 2) - 20, "                                                ");
+  mvprintw((max_y / 2) - 10, (max_x / 2) - 20, " (up) - select profile up                       ");
+  mvprintw((max_y / 2) - 9, (max_x / 2) - 20, " (down) - select profile down                   ");
+  mvprintw((max_y / 2) - 8, (max_x / 2) - 20, " (enter) - connect selected profile             ");
+  mvprintw((max_y / 2) - 7, (max_x / 2) - 20, "                                                ");
+  mvprintw((max_y / 2) - 6, (max_x / 2) - 20, " (s) - start service zapret2                    ");
+  mvprintw((max_y / 2) - 5, (max_x / 2) - 20, " (x) - stop service zapret2                     ");
+  mvprintw((max_y / 2) - 4, (max_x / 2) - 20, " (r) - reload/restart service zapret2           ");
+  mvprintw((max_y / 2) - 3, (max_x / 2) - 20, "                                                ");
+  mvprintw((max_y / 2) - 2, (max_x / 2) - 20, " (t) - test selected profile                    ");
+  mvprintw((max_y / 2) - 1, (max_x / 2) - 20, " (a) - test all profiles                        ");
+  mvprintw((max_y / 2) + 0, (max_x / 2) - 20, " (q) - quit program                             ");
+  mvprintw((max_y / 2) + 1, (max_x / 2) - 20, "                                                ");
+  mvprintw((max_y / 2) + 2, (max_x / 2) - 20, " testing codes:                                 ");
+  mvprintw((max_y / 2) + 3, (max_x / 2) - 20, "                                                ");
+  mvprintw((max_y / 2) + 4, (max_x / 2) - 20, " - (S) -- (green) -- SUCCESS                    ");
+  mvprintw((max_y / 2) + 5, (max_x / 2) - 20, "      desync is working, the site is accessible ");
+  mvprintw((max_y / 2) + 6, (max_x / 2) - 20, " - (P) -- (turquoise) -- PARTIAL                ");
+  mvprintw((max_y / 2) + 7, (max_x / 2) - 20, "      site available, but desync not detected   ");
+  mvprintw((max_y / 2) + 8, (max_x / 2) - 20, " - (F) -- (red) -- FAIL                         ");
+  mvprintw((max_y / 2) + 9, (max_x / 2) - 20, "      site unavailable                          ");
+  mvprintw((max_y / 2) + 10, (max_x / 2) - 20, " - (T) -- (yellow) -- TESTING                   ");
+  mvprintw((max_y / 2) + 11, (max_x / 2) - 20, "      test in progress                          ");
+  mvprintw((max_y / 2) + 12, (max_x / 2) - 20, " - (X) -- (magenta) -- ERROR                    ");
+  mvprintw((max_y / 2) + 13, (max_x / 2) - 20, "      nfqws2 error                              ");
+
   attroff(COLOR_PAIR(4));
 }
 
 void error_window(const char *message) {
+  LOG_WARN("ui", "Error window: %s", message);
   char lines[8][41];
   int line_count = 0;
   int max_line_len = 0;
@@ -289,6 +349,7 @@ void clean_between_boxes() {
 }
 
 void ui_cleanup() {
+  LOG_INFO("ui", "Cleaning up UI windows");
   if (header_win) { delwin(header_win); header_win = NULL; }
   if (main_win)   { delwin(main_win);   main_win = NULL; }
   if (menu_win)   { delwin(menu_win);   menu_win = NULL; }

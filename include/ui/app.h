@@ -8,7 +8,7 @@
 #include "./ui.h"
 #include "../utils/readconf.h"
 
-int  app_init(Profile *profile_get, short *n_profiles_get, Config main_conf_get);
+int  app_init(Profile *profile_get, short *n_profiles_get, Config main_conf_get, Testing testing_get);
 void app_run();
 void app_cleanup();
 

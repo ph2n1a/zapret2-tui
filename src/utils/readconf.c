@@ -1,9 +1,12 @@
 #include "../../include/utils/readconf.h"
+#include "../../include/utils/log.h"
+#include <confuse.h>
 #include <stdio.h>
 
 int read_conf_config(Config *config_main, const char *section) {
+  LOG_INFO("readconf", "Reading config section '%s'", section);
   if (!config_main || !section) {
-    fprintf(stderr, "Error: read_conf_config received invalid arguments.\n");
+    LOG_ERROR("readconf", "read_conf_config: invalid arguments");
     return 1;
   }
 
@@ -24,14 +27,14 @@ int read_conf_config(Config *config_main, const char *section) {
     cfg_t *cfg = cfg_init(opts, 0);
 
     if (cfg_parse(cfg, "./config/config") != CFG_SUCCESS) {
-      fprintf(stderr, "Error: failed to parse ./config/config.\n");
+      LOG_ERROR("readconf", "Failed to parse ./config/config");
       cfg_free(cfg);
       return 1;
     }
 
     cfg_t *main_sec = cfg_getsec(cfg, "main");
     if (!main_sec) {
-      fprintf(stderr, "Error: section \"main\" is missing in ./config/config.\n");
+      LOG_ERROR("readconf", "Section 'main' missing in config");
       cfg_free(cfg);
       return 1;
     }
@@ -40,14 +43,14 @@ int read_conf_config(Config *config_main, const char *section) {
     const char *zapret_path = cfg_getstr(main_sec, "zapret_path");
     const char *program_path = cfg_getstr(main_sec, "program_path");
     if (!zapret_path || !program_path) {
-      fprintf(stderr, "Error: required keys are missing in ./config/config.\n");
+      LOG_ERROR("readconf", "Required keys missing in config");
       cfg_free(cfg);
       return 1;
     }
 
     if (strlen(zapret_path) >= sizeof(config_main->zapret_path) ||
         strlen(program_path) >= sizeof(config_main->program_path)) {
-      fprintf(stderr, "Error: zapret_path or program_path is too long in ./config/config.\n");
+      LOG_ERROR("readconf", "zapret_path or program_path too long");
       cfg_free(cfg);
       return 1;
     }
@@ -59,18 +62,25 @@ int read_conf_config(Config *config_main, const char *section) {
     cfg_free(cfg);
     return 0;
   } else {
-    fprintf(stderr, "Error: unsupported config section \"%s\" for ./config/config.\n", section);
+    LOG_ERROR("readconf", "Unsupported section '%s'", section);
     return 1;
   }
 }
 
 Profile* read_conf_profiles(const char *section, short *count, short *error_code) {
+  LOG_INFO("readconf", "Reading profiles from ./profiles.conf");
   if (!section || !count || !error_code) {
-    fprintf(stderr, "Error: read_conf_profiles received invalid arguments.\n");
+    LOG_ERROR("readconf", "read_conf_profiles: invalid arguments");
     return NULL;
   }
   *count = 0;
   *error_code = 0;
+
+  cfg_opt_t testing_opts[] = {
+    CFG_STR("tables", "iptables", CFGF_NONE),
+    CFG_STR("domain_test", "rutracker.org", CFGF_NONE),
+    CFG_END()
+  };
 
   cfg_opt_t profile_opts[] = {
     CFG_INT("id", 0, CFGF_NONE),
@@ -81,7 +91,8 @@ Profile* read_conf_profiles(const char *section, short *count, short *error_code
 
   if (strcmp(section, "profile") == 0) {
     cfg_opt_t opts[] = {
-      CFG_SEC(section, profile_opts, CFGF_MULTI),
+      CFG_SEC("profile", profile_opts, CFGF_MULTI),
+      CFG_SEC("testing", testing_opts, CFGF_NONE),
       CFG_END()
     };
 
@@ -90,7 +101,7 @@ Profile* read_conf_profiles(const char *section, short *count, short *error_code
     int ret = cfg_parse(cfg, "./profiles.conf");
     if (ret != CFG_SUCCESS) {
       *error_code = 1;
-      fprintf(stderr, "Error: failed to parse ./profiles.conf.\n");
+      LOG_ERROR("readconf", "Failed to parse ./profiles.conf");
       cfg_free(cfg);
       return NULL;
     }
@@ -100,14 +111,14 @@ Profile* read_conf_profiles(const char *section, short *count, short *error_code
 
     if (n_profiles == 0) {
       *error_code = 1;
-      fprintf(stderr, "Error: ./profiles.conf does not contain any profile sections.\n");
+      LOG_ERROR("readconf", "No profile sections in ./profiles.conf");
       cfg_free(cfg);
       return NULL;
     }
 
     if (n_profiles < 0 || n_profiles > 1024) {
       *error_code = 1;
-      fprintf(stderr, "Error: too many profiles in ./profiles.conf (max 1024).\n");
+      LOG_ERROR("readconf", "Too many profiles (max 1024)");
       cfg_free(cfg);
       return NULL;
     }
@@ -115,7 +126,7 @@ Profile* read_conf_profiles(const char *section, short *count, short *error_code
     Profile *profile = calloc((size_t)n_profiles, sizeof(Profile));
     if (!profile) {
       *error_code = 1;
-      fprintf(stderr, "Error: out of memory while reading ./profiles.conf.\n");
+      LOG_ERROR("readconf", "Out of memory reading profiles");
       cfg_free(cfg);
       return NULL;
     }
@@ -124,7 +135,7 @@ Profile* read_conf_profiles(const char *section, short *count, short *error_code
       cfg_t *sec = cfg_getnsec(cfg, section, i);
       if (!sec) {
         *error_code = 1;
-        fprintf(stderr, "Error: failed to read profile section %d from ./profiles.conf.\n", i);
+        LOG_ERROR("readconf", "Failed to read profile section %d", i);
         free(profile);
         cfg_free(cfg);
         return NULL;
@@ -156,7 +167,7 @@ Profile* read_conf_profiles(const char *section, short *count, short *error_code
       if (strlen(name) >= sizeof(profile[i].name) ||
           strlen(nfqws2_opt) >= sizeof(profile[i].nfqws2_opt)) {
         *error_code = 1;
-        fprintf(stderr, "Error: profile %d contains a value that is too long.\n", i);
+        LOG_ERROR("readconf", "Profile %d value too long", i);
         free(profile);
         cfg_free(cfg);
         return NULL;
@@ -167,7 +178,7 @@ Profile* read_conf_profiles(const char *section, short *count, short *error_code
       
       if (strcmp(profile[i].name, "none") == 0 || strcmp(profile[i].nfqws2_opt, "none") == 0) {
         *error_code = 1;
-        fprintf(stderr, "Error: profile %d contains placeholder value \"none\" in a required field.\n", i);
+        LOG_ERROR("readconf", "Profile %d has placeholder 'none' in required field", i);
         free(profile);
         cfg_free(cfg);
         return NULL;
@@ -177,9 +188,57 @@ Profile* read_conf_profiles(const char *section, short *count, short *error_code
     cfg_free(cfg);
     return profile;
   } else {
-    fprintf(stderr, "Error: unsupported section \"%s\" for ./profiles.conf.\n", section);
+    LOG_ERROR("readconf", "Unsupported section '%s'", section);
   }
 
   *error_code = 1;
   return NULL;
+}
+
+Testing read_conf_testing() {
+  LOG_INFO("readconf", "Reading testing config");
+  Testing result;
+  result.error_code = false;
+
+  cfg_opt_t testing_opts[] = {
+    CFG_STR("tables", "iptables", CFGF_NONE),
+    CFG_STR("domain_test", "rutracker.org", CFGF_NONE),
+    CFG_END()
+  };
+
+  cfg_opt_t profile_opts[] = {
+    CFG_INT("id", 0, CFGF_NONE),
+    CFG_STR("name", "none", CFGF_NONE),
+    CFG_STR("NFQWS2_OPT", "none", CFGF_NONE),
+    CFG_END()
+  };
+
+  cfg_opt_t opts[] = {
+    CFG_SEC("profile", profile_opts, CFGF_MULTI),
+    CFG_SEC("testing", testing_opts, CFGF_NONE),
+    CFG_END()
+  };
+
+  cfg_t *cfg = cfg_init(opts, 0);
+
+  if (cfg_parse(cfg, "./profiles.conf") != CFG_SUCCESS) {
+    LOG_ERROR("readconf", "Failed to parse ./profiles.conf (testing)");
+    cfg_free(cfg);
+    result.error_code = true;
+    return result;
+  }
+
+  cfg_t *testing_sec = cfg_getsec(cfg, "testing");
+  if (!testing_sec) {
+    LOG_ERROR("readconf", "Section 'testing' missing in ./profiles.conf");
+    cfg_free(cfg);
+    result.error_code = true;
+    return result;
+  }
+
+  snprintf(result.tables, sizeof(result.tables), "%s", cfg_getstr(testing_sec, "tables"));
+  snprintf(result.domain, sizeof(result.domain), "%s", cfg_getstr(testing_sec, "domain_test"));
+
+  cfg_free(cfg);
+  return result;
 }
